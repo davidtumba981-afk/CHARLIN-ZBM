@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Validation des Comptes</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #111827;
+      --sidebar: #1f2937;
+      --text: #1f2937;
+    }
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; background-color: var(--bg); color: white; }
+    .sidebar { width: 250px; background-color: var(--sidebar); height: 100vh; padding: 20px; box-sizing: border-box; }
+    .sidebar h2 { color: var(--primary); font-size: 18px; margin-bottom: 30px; }
+    .main-content { flex: 1; background-color: #f3f4f6; color: var(--text); padding: 30px; overflow-y: auto; }
+    .section-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+    th { color: #6b7280; font-size: 12px; background: #f9fafb; text-transform: uppercase; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+    .badge-zbm { background: #fee2e2; color: #dc2626; }
+    .badge-dc { background: #dbeafe; color: #2563eb; }
+    .badge-sd { background: #d1fae5; color: #059669; }
+    .status-pending { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+    .status-active { background: #d1fae5; color: #059669; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+    .btn-approve { background: #059669; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-approve:hover { background: #047857; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>🌐 ADMIN GLOBAL</h2>
+    <p style="color:#9ca3af; font-size:12px;">Approbation des accès</p>
+  </div>
+
+  <div class="main-content">
+    <h1 style="margin:0;">Gestion & Approbation des Comptes</h1>
+    <p style="color:#6b7280; margin-top:5px; margin-bottom: 25px;">Validation des profils créés par les utilisateurs</p>
+
+    <div class="section-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Code</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Statut</th>
+            <th>Action Admin</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-validation"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function chargerComptes() {
+      const dcs = JSON.parse(localStorage.getItem('comptes_dc_zbm')) || [];
+      const sds = JSON.parse(localStorage.getItem('comptes_sd_zbm')) || [];
+      const tbody = document.getElementById('tbody-validation');
+      tbody.innerHTML = '';
+
+      // Directeurs de Centre (DC)
+      dcs.forEach((d, index) => {
+        const statutHtml = d.statut === "ACTIF" 
+          ? `<span class="status-active">ACTIF</span>` 
+          : `<span class="status-pending">EN ATTENTE</span>`;
+
+        const actionHtml = d.statut === "ACTIF"
+          ? `<span style="color:#9ca3af; font-size:12px;">Autorisé</span>`
+          : `<button class="btn-approve" onclick="approuverCompte('DC', ${index})">Approuver</button>`;
+
+        tbody.innerHTML += `<tr>
+          <td><span class="badge badge-dc">DC</span></td>
+          <td><b>${d.code}</b></td>
+          <td>${d.nom}</td>
+          <td>${d.email}</td>
+          <td>${statutHtml}</td>
+          <td>${actionHtml}</td>
+        </tr>`;
+      });
+
+      // Agents (SD)
+      sds.forEach((s, index) => {
+        const statutHtml = s.statut === "ACTIF" 
+          ? `<span class="status-active">ACTIF</span>` 
+          : `<span class="status-pending">EN ATTENTE</span>`;
+
+        const actionHtml = s.statut === "ACTIF"
+          ? `<span style="color:#9ca3af; font-size:12px;">Autorisé</span>`
+          : `<button class="btn-approve" onclick="approuverCompte('SD', ${index})">Approuver</button>`;
+
+        tbody.innerHTML += `<tr>
+          <td><span class="badge badge-sd">SD</span></td>
+          <td><b>${s.code}</b></td>
+          <td>${s.nom}</td>
+          <td>${s.email}</td>
+          <td>${statutHtml}</td>
+          <td>${actionHtml}</td>
+        </tr>`;
+      });
+    }
+
+    function approuverCompte(type, index) {
+      if (type === 'DC') {
+        const dcs = JSON.parse(localStorage.getItem('comptes_dc_zbm'));
+        dcs[index].statut = "ACTIF";
+        localStorage.setItem('comptes_dc_zbm', JSON.stringify(dcs));
+      } else if (type === 'SD') {
+        const sds = JSON.parse(localStorage.getItem('comptes_sd_zbm'));
+        sds[index].statut = "ACTIF";
+        localStorage.setItem('comptes_sd_zbm', JSON.stringify(sds));
+      }
+      chargerComptes();
+    }
+
+    chargerComptes();
+  </script>
+</body>
+</html>

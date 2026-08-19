@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace DC - Rapports & Analytics</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #111827;
+      --sidebar: #1f2937;
+      --card: #ffffff;
+      --text: #1f2937;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      background-color: var(--bg);
+      color: white;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: var(--sidebar);
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sidebar h2 { color: var(--primary); font-size: 18px; margin-bottom: 5px; }
+    .sidebar-user { color: #9ca3af; font-size: 12px; margin-bottom: 25px; }
+    .menu-item {
+      padding: 12px;
+      margin: 5px 0;
+      border-radius: 6px;
+      color: white;
+      background-color: var(--primary);
+      font-weight: bold;
+    }
+    .btn-logout {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-logout:hover { background: #b91c1c; }
+    .main-content {
+      flex: 1;
+      background-color: #f3f4f6;
+      color: var(--text);
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .filter-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) auto;
+      gap: 15px;
+      align-items: end;
+    }
+    .form-group { margin: 0; }
+    .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #374151; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box; }
+    .btn-export {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-export:hover { background: #047857; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    .kpi-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .kpi-card span { font-size: 12px; color: #6b7280; font-weight: bold; }
+    .kpi-card h3 { font-size: 28px; margin: 10px 0 0 0; color: #111827; }
+    .section-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+    th { color: #6b7280; font-size: 12px; background: #f9fafb; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div>
+      <h2>🏢 ESPACE DC</h2>
+      <div class="sidebar-user" id="dc-nom-affichage">Directeur de Centre</div>
+      <div class="menu-item">📈 Rapports d'Équipe</div>
+    </div>
+    <button class="btn-logout" onclick="deconnexion()">Se Déconnecter</button>
+  </div>
+
+  <!-- Contenu Principal -->
+  <div class="main-content">
+    <h1 style="margin:0;">Tableau de Bord Directeur</h1>
+    <p style="color:#6b7280; margin-top:5px; margin-bottom:20px;">Supervision et rapports des ventes des agents (SD)</p>
+
+    <!-- Filtres -->
+    <div class="filter-card">
+      <div class="filter-grid">
+        <div class="form-group">
+          <label>Date Début</label>
+          <input type="date" id="filter-date-start" onchange="chargerRapportsDC()">
+        </div>
+        <div class="form-group">
+          <label>Date Fin</label>
+          <input type="date" id="filter-date-end" onchange="chargerRapportsDC()">
+        </div>
+        <div class="form-group">
+          <label>Filtrer par Agent (SD)</label>
+          <select id="filter-agent" onchange="chargerRapportsDC()">
+            <option value="ALL">Tous les agents</option>
+          </select>
+        </div>
+        <button class="btn-export" onclick="exporterCSV()">📥 Exporter CSV</button>
+      </div>
+    </div>
+
+    <!-- Synthèse KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span>Total Gross Adds</span>
+        <h3 id="dc-total-ga">0</h3>
+      </div>
+      <div class="kpi-card">
+        <span>Total Smartphones</span>
+        <h3 id="dc-total-smartphones">0</h3>
+      </div>
+      <div class="kpi-card">
+        <span>Total SSO Actives</span>
+        <h3 id="dc-total-sso">0</h3>
+      </div>
+    </div>
+
+    <!-- Tableau de Saisies SD -->
+    <div class="section-card">
+      <h3 style="margin-top:0;">📋 Rapport des Saisies des Agents</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Agent (SD)</th>
+            <th>Code DC</th>
+            <th>Gross Adds</th>
+            <th>Smartphones</th>
+            <th>SSO Actives</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-rapports-dc"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // 1. Contrôle d'Accès
+    const compteActif = JSON.parse(localStorage.getItem('compte_connecte'));
+    if (!compteActif || (compteActif.role !== 'DC' && compteActif.role !== 'ADMIN')) {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById('dc-nom-affichage').innerText = `${compteActif.nom} (${compteActif.code || 'DC'})`;
+
+    // 2. Chargement des Agents SD dans le Filtre
+    function chargerAgentsFiltre() {
+      const sds = JSON.parse(localStorage.getItem('comptes_sd_zbm')) || [];
+      const select = document.getElementById('filter-agent');
+      
+      // Filtrer pour n'afficher que les SD gérés par ce DC (si non Admin)
+      const agentsMesures = compteActif.role === 'ADMIN' ? sds : sds.filter(s => s.dcCode === compteActif.code);
+
+      agentsMesures.forEach(s => {
+        select.innerHTML += `<option value="${s.nom}">${s.nom} (${s.code})</option>`;
+      });
+    }
+
+    // 3. Affichage et Calcul des Rapports
+    function chargerRapportsDC() {
+      const tousLesRapports = JSON.parse(localStorage.getItem('rapports_saisies')) || [];
+      const filterDateStart = document.getElementById('filter-date-start').value;
+      const filterDateEnd = document.getElementById('filter-date-end').value;
+      const filterAgent = document.getElementById('filter-agent').value;
+
+      // Filtrage par rôle (Un DC voit les rapports rattachés à son code ou à son équipe)
+      let rapportsFiltres = compteActif.role === 'ADMIN' 
+        ? tousLesRapports 
+        : tousLesRapports.filter(r => r.dc === compteActif.code || r.dc === "DC-10001");
+
+      // Filtre par date de début
+      if (filterDateStart) {
+        rapportsFiltres = rapportsFiltres.filter(r => r.date >= filterDateStart);
+      }
+      // Filtre par date de fin
+      if (filterDateEnd) {
+        rapportsFiltres = rapportsFiltres.filter(r => r.date <= filterDateEnd);
+      }
+      // Filtre par agent
+      if (filterAgent !== 'ALL') {
+        rapportsFiltres = rapportsFiltres.filter(r => r.agent === filterAgent);
+      }
+
+      let totalGA = 0;
+      let totalSmartphones = 0;
+      let totalSSO = 0;
+
+      const tbody = document.getElementById('tbody-rapports-dc');
+      tbody.innerHTML = '';
+
+      if (rapportsFiltres.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#9ca3af;">Aucun rapport trouvé.</td></tr>`;
+      } else {
+        rapportsFiltres.forEach(r => {
+          totalGA += Number(r.gross_adds || 0);
+          totalSmartphones += Number(r.smartphones || 0);
+          totalSSO += Number(r.sso_actives || 0);
+
+          tbody.innerHTML += `<tr>
+            <td>${r.date}</td>
+            <td><b>${r.agent}</b></td>
+            <td>${r.dc}</td>
+            <td>${r.gross_adds}</td>
+            <td>${r.smartphones}</td>
+            <td>${r.sso_actives}</td>
+          </tr>`;
+        });
+      }
+
+      document.getElementById('dc-total-ga').innerText = totalGA;
+      document.getElementById('dc-total-smartphones').innerText = totalSmartphones;
+      document.getElementById('dc-total-sso').innerText = totalSSO;
+    }
+
+    // 4. Export CSV
+    function exporterCSV() {
+      const tousLesRapports = JSON.parse(localStorage.getItem('rapports_saisies')) || [];
+      const rapportsExporte = compteActif.role === 'ADMIN' 
+        ? tousLesRapports 
+        : tousLesRapports.filter(r => r.dc === compteActif.code || r.dc === "DC-10001");
+
+      if (rapportsExporte.length === 0) {
+        alert("Aucune donnée à exporter.");
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,Date,Agent,Code DC,Gross Adds,Smartphones,SSO Actives\n";
+      rapportsExporte.forEach(r => {
+        csvContent += `${r.date},${r.agent},${r.dc},${r.gross_adds},${r.smartphones},${r.sso_actives}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Rapport_DC_${compteActif.nom}_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 5. Déconnexion
+    function deconnexion() {
+      localStorage.removeItem('compte_connecte');
+      window.location.href = "login.html";
+    }
+
+    chargerAgentsFiltre();
+    chargerRapportsDC();
+  </script>
+</body>
+</html>

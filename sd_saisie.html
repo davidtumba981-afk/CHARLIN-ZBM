@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Agent SD - Saisie Quotidienne</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #111827; color: white; padding: 30px; }
+    .card { background: #1f2937; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 12px; color: #9ca3af; margin-bottom: 5px; }
+    .form-group input { width: 93%; padding: 10px; border-radius: 4px; border: 1px solid #374151; background: #111827; color: white; }
+    .btn { background: #059669; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    .btn-logout { background: #dc2626; margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>📱 Saisie Quotidienne Agent (SD)</h2>
+    <p id="user-info" style="color: #2563eb; font-weight: bold;"></p>
+
+    <form id="form-saisie">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="date-saisie" required>
+      </div>
+      <div class="form-group">
+        <label>Gross Adds</label>
+        <input type="number" id="gross-adds" min="0" required placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Smartphones</label>
+        <input type="number" id="smartphones" min="0" required placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>SSO Actives</label>
+        <input type="number" id="sso-actives" min="0" required placeholder="0">
+      </div>
+      <button type="submit" class="btn">Enregistrer les données</button>
+    </form>
+
+    <button class="btn btn-logout" onclick="deconnexion()">Se déconnecter</button>
+  </div>
+
+  <script>
+    const compteActif = JSON.parse(localStorage.getItem('compte_connecte'));
+    if (!compteActif || compteActif.role !== 'SD') {
+      window.location.href = 'login.html';
+    } else {
+      document.getElementById('user-info').innerText = `Agent : ${compteActif.nom} (${compteActif.code})`;
+      document.getElementById('date-saisie').valueAsDate = new Date();
+    }
+
+    document.getElementById('form-saisie').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const rapports = JSON.parse(localStorage.getItem('rapports_saisies')) || [];
+      
+      rapports.push({
+        date: document.getElementById('date-saisie').value,
+        agent: compteActif.nom,
+        dc: compteActif.dcCode || 'DC-10001',
+        zone: 'Zone SD',
+        gross_adds: document.getElementById('gross-adds').value,
+        smartphones: document.getElementById('smartphones').value,
+        sso_actives: document.getElementById('sso-actives').value
+      });
+
+      localStorage.setItem('rapports_saisies', JSON.stringify(rapports));
+      alert("Données enregistrées avec succès !");
+      this.reset();
+      document.getElementById('date-saisie').valueAsDate = new Date();
+    });
+
+    function deconnexion() {
+      localStorage.removeItem('compte_connecte');
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

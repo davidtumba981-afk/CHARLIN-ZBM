@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapports & Analytics - ZBM / DC / SD</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #111827;
+      --sidebar: #1f2937;
+      --card: #ffffff;
+      --text: #1f2937;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      background-color: var(--bg);
+      color: white;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: var(--sidebar);
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .sidebar h2 { color: var(--primary); font-size: 18px; margin-bottom: 30px; }
+    .menu-item {
+      padding: 12px;
+      margin: 5px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #9ca3af;
+      text-decoration: none;
+      display: block;
+    }
+    .menu-item:hover, .menu-item.active { background-color: var(--primary); color: white; font-weight: bold; }
+    .main-content {
+      flex: 1;
+      background-color: #f3f4f6;
+      color: var(--text);
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .filter-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr) auto;
+      gap: 15px;
+      align-items: end;
+    }
+    .form-group { margin: 0; }
+    .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #374151; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box; }
+    .btn-export {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-export:hover { background: #047857; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    .kpi-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .kpi-card span { font-size: 12px; color: #6b7280; font-weight: bold; }
+    .kpi-card h3 { font-size: 28px; margin: 10px 0 0 0; color: #111827; }
+    .section-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+    th { color: #6b7280; font-size: 12px; background: #f9fafb; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🌐 ADMIN GLOBAL</h2>
+    <a href="index.html" class="menu-item">📊 Supervision Réseau</a>
+    <a href="reports.html" class="menu-item active">📈 Rapports & Exports</a>
+  </div>
+
+  <!-- Contenu Principal -->
+  <div class="main-content">
+    <h1 style="margin:0;">Générateur de Rapports</h1>
+    <p style="color:#6b7280; margin-top:5px;">Analyse des performances et extraction des données</p>
+
+    <!-- Filtres -->
+    <div class="filter-card">
+      <div class="filter-grid">
+        <div class="form-group">
+          <label>Date Début</label>
+          <input type="date" id="filter-date-start">
+        </div>
+        <div class="form-group">
+          <label>Date Fin</label>
+          <input type="date" id="filter-date-end">
+        </div>
+        <div class="form-group">
+          <label>Filtrer par Zone (ZBM)</label>
+          <select id="filter-zbm">
+            <option value="ALL">Toutes les zones</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Indicateur Principal</label>
+          <select id="filter-kpi">
+            <option value="ALL">Tous les KPIs</option>
+            <option value="gross_adds">Gross Adds</option>
+            <option value="smartphones">Smartphones</option>
+            <option value="sso_actives">SSO Actives</option>
+          </select>
+        </div>
+        <button class="btn-export" onclick="exporterCSV()">📥 Exporter CSV</button>
+      </div>
+    </div>
+
+    <!-- Synthèse KPI du Rapport -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span>Total Gross Adds Réalisés</span>
+        <h3 id="report-total-ga">0</h3>
+      </div>
+      <div class="kpi-card">
+        <span>Total Ventes Smartphones</span>
+        <h3 id="report-total-smartphones">0</h3>
+      </div>
+      <div class="kpi-card">
+        <span>Total Activations SSO</span>
+        <h3 id="report-total-sso">0</h3>
+      </div>
+    </div>
+
+    <!-- Tableau de Rapport -->
+    <div class="section-card">
+      <h3 style="margin-top:0;">📋 Détail des Saisies Agents (SD)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Agent (SD)</th>
+            <th>Directeur (DC)</th>
+            <th>Zone (ZBM)</th>
+            <th>Gross Adds</th>
+            <th>Smartphones</th>
+            <th>SSO Actives</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-rapports"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function initialiserDonneesRapports() {
+      if (!localStorage.getItem('rapports_saisies')) {
+        localStorage.setItem('rapports_saisies', JSON.stringify([
+          { date: "2026-08-18", agent: "Jean Dupont", dc: "DC-10001", zone: "ZBM-01", gross_adds: 25, smartphones: 10, sso_actives: 18 },
+          { date: "2026-08-19", agent: "Jean Dupont", dc: "DC-10001", zone: "ZBM-01", gross_adds: 30, smartphones: 14, sso_actives: 22 },
+          { date: "2026-08-19", agent: "Alice Martin", dc: "DC-10002", zone: "ZBM-02", gross_adds: 40, smartphones: 18, sso_actives: 35 }
+        ]));
+      }
+    }
+
+    function chargerOptionsZones() {
+      const zbms = JSON.parse(localStorage.getItem('zones_zbm')) || [];
+      const select = document.getElementById('filter-zbm');
+      zbms.forEach(z => {
+        select.innerHTML += `<option value="${z.code}">${z.nom} (${z.code})</option>`;
+      });
+    }
+
+    function chargerRapports() {
+      initialiserDonneesRapports();
+      const rapports = JSON.parse(localStorage.getItem('rapports_saisies')) || [];
+
+      let totalGA = 0;
+      let totalSmartphones = 0;
+      let totalSSO = 0;
+
+      const tbody = document.getElementById('tbody-rapports');
+      tbody.innerHTML = '';
+
+      rapports.forEach(r => {
+        totalGA += Number(r.gross_adds);
+        totalSmartphones += Number(r.smartphones);
+        totalSSO += Number(r.sso_actives);
+
+        tbody.innerHTML += `<tr>
+          <td>${r.date}</td>
+          <td><b>${r.agent}</b></td>
+          <td>${r.dc}</td>
+          <td><b>${r.zone}</b></td>
+          <td>${r.gross_adds}</td>
+          <td>${r.smartphones}</td>
+          <td>${r.sso_actives}</td>
+        </tr>`;
+      });
+
+      document.getElementById('report-total-ga').innerText = totalGA;
+      document.getElementById('report-total-smartphones').innerText = totalSmartphones;
+      document.getElementById('report-total-sso').innerText = totalSSO;
+    }
+
+    function exporterCSV() {
+      const rapports = JSON.parse(localStorage.getItem('rapports_saisies')) || [];
+      if (rapports.length === 0) {
+        alert("Aucune donnée à exporter !");
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,Date,Agent,DC,Zone,Gross Adds,Smartphones,SSO Actives\n";
+      rapports.forEach(r => {
+        csvContent += `${r.date},${r.agent},${r.dc},${r.zone},${r.gross_adds},${r.smartphones},${r.sso_actives}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Rapport_Ventes_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    chargerOptionsZones();
+    chargerRapports();
+  </script>
+</body>
+</html>
